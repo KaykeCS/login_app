@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from tkinter import messagebox
-root = ctk.CTk()
+from tkinter import messagebox, END
+import sqlite3
 
 
 class Application():
@@ -9,7 +9,6 @@ class Application():
         self.theme()
         self.window_root()
         self.login()
-        self.root.mainloop()
 
     def theme(self):
         ctk.set_appearance_mode('dark')
@@ -36,13 +35,13 @@ class Application():
                              font=('Roboto', 20))
         label.place(x=25, y=5)
 
-        username_entry1 = ctk.CTkEntry(
+        self.entry_login_username = ctk.CTkEntry(
             master=self.login_frame,
             placeholder_text='Nome de Usuário',
             width=300,
             font=("Arial", 10)
         )
-        username_entry1.place(x=25, y=105)
+        self.entry_login_username.place(x=25, y=105)
 
         username_label1 = ctk.CTkLabel(
             master=self.login_frame,
@@ -51,14 +50,14 @@ class Application():
         )
         username_label1.place(x=25, y=135)
 
-        password_entry2 = ctk.CTkEntry(
+        self.entry_login_password = ctk.CTkEntry(
             master=self.login_frame,
             placeholder_text='Senha',
             width=300,
             font=("Arial", 10),
             show='*'
         )
-        password_entry2.place(x=25, y=175)
+        self.entry_login_password.place(x=25, y=175)
 
         password_label2 = ctk.CTkLabel(
             master=self.login_frame,
@@ -93,19 +92,18 @@ class Application():
             width=150,
             fg_color='green',
             hover_color='#2D9334',
-            command=self.register_screen)
+            command=self.registration_screen)
         self.register_button.place(x=175, y=325)
 
     def back(self):
         self.register_frame.pack_forget()
-
         self.login_frame.pack()
 
     def save_user(self):
         self.msg_save = messagebox.showinfo(
             title='Status do Cadastro', message='Cadastro Efetuado.')
 
-    def register_screen(self):
+    def registration_screen(self):
         self.login_frame.pack_forget()
 
         self.register_frame = ctk.CTkFrame(
@@ -126,32 +124,32 @@ class Application():
                             text_color='gray')
         span.place(x=25, y=65)
 
-        username_entry1 = ctk.CTkEntry(
+        self.entry_register_username = ctk.CTkEntry(
             master=self.register_frame,
             placeholder_text='Nome de Usuário',
             width=300,
             font=("Arial", 13)
         )
-        username_entry1.place(x=25, y=105)
+        self.entry_register_username.place(x=25, y=105)
 
-        email_entry = ctk.CTkEntry(
+        self.entry_register_email = ctk.CTkEntry(
             master=self.register_frame,
             placeholder_text='E-mail de Usuário',
             width=300,
             font=("Arial", 13)
         )
-        email_entry.place(x=25, y=145)
+        self.entry_register_email.place(x=25, y=145)
 
-        password_entry = ctk.CTkEntry(
+        self.entry_register_password = ctk.CTkEntry(
             master=self.register_frame,
             placeholder_text='Senha de Usuário',
             width=300,
             font=("Arial", 13),
             show='*'
         )
-        password_entry.place(x=25, y=185)
+        self.entry_register_password.place(x=25, y=185)
 
-        cpass_entry = ctk.CTkEntry(
+        self.entry_register_cpass = ctk.CTkEntry(
             master=self.register_frame,
             placeholder_text='Confirmar senha',
             width=300,
@@ -159,7 +157,7 @@ class Application():
             show='*'
         )
 
-        cpass_entry.place(x=25, y=225)
+        self.entry_register_cpass.place(x=25, y=225)
 
         checkbox = ctk.CTkCheckBox(
             master=self.register_frame,
@@ -181,10 +179,57 @@ class Application():
             width=145,
             fg_color='green',
             hover_color='#014B05',
-            command=self.save_user
+            command=backend.registration_user
         )
         save_button.place(x=180, y=315)
 
+    def clean_entry_register(self):
+        self.entry_register_username.delete(0, END)
+        self.entry_register_email.delete(0, END)
+        self.entry_register_password.delete(0, END)
+        self.entry_register_cpass.delete(0, END)
+
+    def clean_entry_login(self):
+        self.entry_login_username.delete(0, END)
+        self.entry_login_password.delete(0, END)
+
+
+class BackEnd():
+    def connect_db(self):
+        self.conn = sqlite3.connect("Sistema.db")
+        self.cursor = self.conn.cursor()
+        print("Banco de dados conectado.")
+
+    def disconnect_db(self):
+        self.conn.close()
+        print("Banco de dados desconectado.")
+
+    def create_table(self):
+        self.connect_db()
+        self.cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS users(
+                    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    Username TEXT NOT NULL,
+                    Email TEXT NOT NULL,
+                    Password TEXT NOT NULL,
+                    ConfPassword TEXT NOT NULL
+)""")
+        self.conn.commit()
+        print("Tabela criada.")
+        self.disconnect_db()
+
+    def registration_user(self, ):
+        entry_register_username = app.entry_register_username.get()
+        entry_register_email = app.entry_register_email.get()
+        entry_register_password = app.entry_register_password.get()
+        entry_register_cpass = app.entry_register_cpass.get()
+        print(entry_register_username,
+              entry_register_email,
+              entry_register_password,
+              entry_register_cpass)
+
 
 if __name__ == "__main__":
-    Application()
+    app = Application()
+    backend = BackEnd()
+    app.root.mainloop()
