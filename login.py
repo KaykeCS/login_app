@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from tkinter import messagebox, END
+from tkinter import messagebox as msg, END
 import sqlite3
 
 
@@ -21,7 +21,7 @@ class Application():
         self.root.resizable(False, False)
 
     def message_box_login(self):
-        self.msg = messagebox.showinfo(
+        self.msg = msg.showinfo(
             title='Status de Login',
             message='Login Feito com Sucesso!')
 
@@ -100,7 +100,7 @@ class Application():
         self.login_frame.pack()
 
     def save_user(self):
-        self.msg_save = messagebox.showinfo(
+        self.msg_save = msg.showinfo(
             title='Status do Cadastro', message='Cadastro Efetuado.')
 
     def registration_screen(self):
@@ -194,7 +194,7 @@ class Application():
         self.entry_login_password.delete(0, END)
 
 
-class BackEnd():
+class BackEnd(Application):
     def connect_db(self):
         self.conn = sqlite3.connect("Sistema.db")
         self.cursor = self.conn.cursor()
@@ -218,16 +218,61 @@ class BackEnd():
         print("Tabela criada.")
         self.disconnect_db()
 
-    def registration_user(self, ):
-        entry_register_username = app.entry_register_username.get()
-        entry_register_email = app.entry_register_email.get()
-        entry_register_password = app.entry_register_password.get()
-        entry_register_cpass = app.entry_register_cpass.get()
-        print(entry_register_username,
-              entry_register_email,
-              entry_register_password,
-              entry_register_cpass)
+    def registration_user(self):
+        self.entry_register_username = app.entry_register_username.get()
+        self.entry_register_email = app.entry_register_email.get()
+        self.entry_register_password = app.entry_register_password.get()
+        self.entry_register_cpass = app.entry_register_cpass.get()
+        print(self.entry_register_username,
+              self.entry_register_email,
+              self.entry_register_password,
+              self.entry_register_cpass)
+        self.connect_db()
+        self.cursor.execute("""
+                INSERT INTO users (Username, Email, Password, ConfPassword)
+                VALUES (?, ?, ?, ?)""", (self.entry_register_username,
+                                         self.entry_register_email,
+                                         self.entry_register_password,
+                                         self.entry_register_cpass))
+        try:
 
+            if (self.entry_register_username == '' or
+                self.entry_register_email == '' or
+                self.entry_register_password == '' or
+                    self.entry_register_cpass == ''):
+                msg.showerror(
+                    title='Sistema de login',
+                    message='Erro. \nPreencha todos os campos!')
+            elif (len(self.entry_register_username) < 4):
+                msg.showwarning(
+                    title='Sistema de login',
+                    message='Nome de usuário deve conter no minimo 4 caracteres.'
+                )
+            elif (len(self.entry_register_password) < 4):
+                msg.showwarning(
+                    title='Sistema de login',
+                    message='A Senha deve conter no minimo 4 caracteres.')
+            elif (self.entry_register_password != self.entry_register_cpass):
+                msg.showerror(
+                    title='Sistema de login',
+                    message='Erro. \nSenha e Confirmar Senha diferentes.')
+            else:
+                self.conn.commit()
+                msg.showinfo(title='Sistema de login',
+                                    message='Dados Cadastrados!')
+                self.disconnect_db()
+                self.clean_entry_register()
+                # BARRAR ESPAÇOS NOS CAMPOS
+                # BARRAR ESPAÇOS NOS CAMPOS
+                # BARRAR ESPAÇOS NOS CAMPOS
+        except:
+            msg.showerror(
+                title='Sistema de login',
+                message="Erro no processamento do seu cadastro"
+            )
+            self.disconnect_db()
+            self.clean_entry_register()
+    def login_verify(self):
 
 if __name__ == "__main__":
     app = Application()
