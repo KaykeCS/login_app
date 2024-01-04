@@ -28,13 +28,25 @@ class BackEnd():
         print("Tabela criada.")
         self.disconnect_db()
 
+    def check_policy_status_checkbox(self):
+        checkbox_state = app.policy_status_checkbox_var.get()
+        if not checkbox_state:
+            msg.showwarning(
+                title='Sistema de Cadastro',
+                message='Aceite os termos e políticas.'
+            )
+        else:
+            self.registration_user()
+
     def registration_user(self):
+
         self.entry_register_username_val = app.entry_register_username.get()
         self.entry_register_email_val = app.entry_register_email.get()
         self.entry_register_password_val = app.entry_register_password.get()
         self.entry_register_cpass_val = app.entry_register_cpass.get()
 
         try:
+
             self.connect_db()
 
             query = """
@@ -87,10 +99,21 @@ class BackEnd():
                 message=f"Erro ao inserir dados: {str(e)}")
 
         finally:
+
             app.clean_entry_register()
             self.disconnect_db()
 
+    def check_remember_status_checkbox(self):
+        remember_checkbox_state = app.remember_status_checkbox_var.get()
+
+        if remember_checkbox_state == 'off':
+            self.login_verify()
+
+        else:
+            print('marcada')
+
     def login_verify(self):
+
         self.connect_db()
         self.login_username = app.entry_login_username.get()
         self.login_password = app.entry_login_password.get()
@@ -125,8 +148,9 @@ class Application(BackEnd):
         super().__init__()
         self.root = ctk.CTk()
         self.window_root()
+        self.remember_status_checkbox_var = tk.StringVar()
         self.login()
-        self.verify_checkbox = tk.StringVar()
+        self.policy_status_checkbox_var = tk.StringVar()
 
     def window_root(self):
         self.root.geometry('700x400')
@@ -177,17 +201,21 @@ class Application(BackEnd):
         )
         password_label2.place(x=25, y=205)
 
-        self.checkbox = ctk.CTkCheckBox(
+        self.remember_checkbox = ctk.CTkCheckBox(
             master=self.login_frame,
-            text='Lembrar-se de mim sempre'
+            text='Lembrar-se de mim sempre',
+            command=self.remember_checkbox_event,
+            variable=self.remember_status_checkbox_var,
+            onvalue="on",
+            offvalue="off"
         )
-        self.checkbox.place(x=25, y=235)
+        self.remember_checkbox.place(x=25, y=235)
 
         login_button = ctk.CTkButton(
             master=self.login_frame,
             text='Login',
             width=300,
-            command=self.login_verify
+            command=self.check_remember_status_checkbox
         )
         login_button.place(x=25, y=285)
 
@@ -213,10 +241,6 @@ class Application(BackEnd):
     def save_user(self):
         self.msg_save = msg.showinfo(
             title='Status do Cadastro', message='Cadastro Efetuado.')
-
-    def checkbox_event(self):
-
-        print("checkbox toggled, current value:", self.verify_checkbox.get())
 
     def registration_screen(self):
         self.login_frame.pack_forget()
@@ -278,10 +302,11 @@ class Application(BackEnd):
             master=self.register_frame,
             text='Aceito todos os Termos e Políticas',
             command=self.checkbox_event,
-            variable=self.verify_checkbox,
+            variable=self.policy_status_checkbox_var,
             onvalue="on",
             offvalue="off"
         )
+
         self.checkbox_policy.place(x=25, y=265)
 
         back_button = ctk.CTkButton(master=self.register_frame,
@@ -298,9 +323,17 @@ class Application(BackEnd):
             width=145,
             fg_color='green',
             hover_color='#014B05',
-            command=self.registration_user
+            command=self.check_policy_status_checkbox
         )
         save_button.place(x=180, y=315)
+
+    def checkbox_event(self):
+        print("checkbox toggled, current value:",
+              self.policy_status_checkbox_var.get())
+
+    def remember_checkbox_event(self):
+        print("checkbox toggled, current value:",
+              self.remember_status_checkbox_var.get())
 
     def clean_entry_register(self):
         self.entry_register_username.delete(0, END)
