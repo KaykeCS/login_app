@@ -38,14 +38,54 @@ class BackEnd():
         else:
             self.registration_user()
 
+    def clean_backspaces(self):
+        self.register_username_val = self.register_username_val.replace(
+            ' ', '')
+        self.register_email_val = self.register_email_val.replace(
+            ' ', '')
+        self.register_password_val = self.register_password_val.replace(
+            ' ', '')
+        self.register_cpass_val = self.register_cpass_val.replace(
+            ' ', '')
+
+    def checking_data(self):
+        self.cursor.execute(
+            "SELECT Username FROM users WHERE Username = ?",
+            (self.register_username_val,))
+        checking_username = self.cursor.fetchone()
+
+        if checking_username is not None and checking_username[0] == self.register_username_val:
+            msg.showerror(title='Sistema de Cadastro',
+                          message='Este login já existe.')
+            self.disconnect_db()
+            return
+
+        self.cursor.execute(
+            "SELECT Email FROM users WHERE Email = ?",
+            (self.register_email_val,))
+        checking_email = self.cursor.fetchone()
+
+        if checking_email is not None and checking_email[0] == self.register_email_val:
+            msg.showerror(title='Sistema de Cadastro',
+                          message='Este email já existe.')
+            self.disconnect_db()
+
     def registration_user(self):
 
-        self.entry_register_username_val = app.entry_register_username.get()
-        self.entry_register_email_val = app.entry_register_email.get()
-        self.entry_register_password_val = app.entry_register_password.get()
-        self.entry_register_cpass_val = app.entry_register_cpass.get()
+        self.register_username_val = app.entry_register_username.get()
+        self.register_email_val = app.entry_register_email.get()
+        self.register_password_val = app.entry_register_password.get()
+        self.register_cpass_val = app.entry_register_cpass.get()
 
         try:
+            self.register_username_val = self.register_username_val.replace(
+                ' ', '')
+            self.register_email_val = self.register_email_val.replace(
+                ' ', '')
+            self.register_password_val = self.register_password_val.replace(
+                ' ', '')
+            self.register_cpass_val = self.register_cpass_val.replace(
+                ' ', '')
 
             self.connect_db()
 
@@ -53,64 +93,56 @@ class BackEnd():
                 INSERT INTO users (Username, Email, Password, ConfPassword)
                 VALUES (?, ?, ?, ?)
             """
-            data = (self.entry_register_username_val,
-                    self.entry_register_email_val,
-                    self.entry_register_password_val,
-                    self.entry_register_cpass_val)
+            data = (self.register_username_val,
+                    self.register_email_val,
+                    self.register_password_val,
+                    self.register_cpass_val)
 
             with self.conn:
+                self.checking_data()
                 self.cursor.execute(query, data)
 
-            if (self.entry_register_username_val == '' or
-                self.entry_register_email_val == '' or
-                self.entry_register_password_val == '' or
-                    self.entry_register_cpass_val == ''):
+            if (self.register_username_val == '' or
+                self.register_email_val == '' or
+                self.register_password_val == '' or
+                    self.register_cpass_val == ''):
                 msg.showerror(
-                    title='Sistema de login',
+                    title='Sistema de Cadastro',
                     message='Erro. \nPreencha todos os campos!')
 
-            elif (len(self.entry_register_username_val) < 4):
+            elif (len(self.register_username_val) < 4):
                 msg.showwarning(
-                    title='Sistema de login',
+                    title='Sistema de Cadastro',
                     message='O Usuário deve conter no mínimo 4 caracteres.'
                 )
-
-            elif (len(self.entry_register_password_val) < 4):
+            elif (len(self.register_password_val) < 4):
                 msg.showwarning(
-                    title='Sistema de login',
+                    title='Sistema de Cadastro',
                     message='A Senha deve conter no mínimo 4 caracteres.'
                 )
 
-            elif (self.entry_register_password_val !=
-                  self.entry_register_cpass_val):
+            elif (self.register_password_val !=
+                  self.register_cpass_val):
                 msg.showerror(
-                    title='Sistema de login',
+                    title='Sistema de Cadastro',
                     message='Erro. \nSenha e Confirmar Senha diferentes.'
                 )
 
             else:
                 self.conn.commit()
-                msg.showinfo(title='Sistema de login',
+                msg.showinfo(title='Sistema de Cadastro',
                              message='Dados Cadastrados!')
 
         except sqlite3.Error as e:
             msg.showerror(
-                title='Sistema de login',
-                message=f"Erro ao inserir dados: {str(e)}")
+                title='Sistema de Cadastro',
+                message="Erro ao inserir dados.")
+            print(f"Erro ao inserir dados: {str(e)}")
 
         finally:
 
             app.clean_entry_register()
             self.disconnect_db()
-
-    def check_remember_status_checkbox(self):
-        remember_checkbox_state = app.remember_status_checkbox_var.get()
-
-        if remember_checkbox_state == 'off':
-            self.login_verify()
-
-        else:
-            print('marcada')
 
     def login_verify(self):
 
@@ -142,13 +174,15 @@ class BackEnd():
                 message='Erro. Verifique seu login e senha novamente.')
             self.disconnect_db()
 
+    def forget_y_password_clicked(self):
+        print('Click')
 
-class Application(BackEnd):
+
+class FrontEnd(BackEnd):
     def __init__(self):
         super().__init__()
         self.root = ctk.CTk()
         self.window_root()
-        self.remember_status_checkbox_var = tk.StringVar()
         self.login()
         self.policy_status_checkbox_var = tk.StringVar()
 
@@ -180,7 +214,7 @@ class Application(BackEnd):
 
         username_label1 = ctk.CTkLabel(
             master=self.login_frame,
-            text='*Esse campo exige caracter obrigatório.',
+            text='*Esse campo precisa ser preenchido.',
             text_color='green'
         )
         username_label1.place(x=25, y=135)
@@ -196,26 +230,27 @@ class Application(BackEnd):
 
         password_label2 = ctk.CTkLabel(
             master=self.login_frame,
-            text='*Esse campo exige caracter obrigatório.',
+            text='*Esse campo precisa ser preenchido.',
             text_color='green'
         )
         password_label2.place(x=25, y=205)
 
-        self.remember_checkbox = ctk.CTkCheckBox(
+        self.forget_y_password = ctk.CTkButton(
             master=self.login_frame,
-            text='Lembrar-se de mim sempre',
-            command=self.remember_checkbox_event,
-            variable=self.remember_status_checkbox_var,
-            onvalue="on",
-            offvalue="off"
+            text='Esqueceu sua senha ?',
+            corner_radius=10,
+            border_width=0,
+            fg_color=("transparent"),
+            hover=False,
+            command=self.forget_y_password_clicked
         )
-        self.remember_checkbox.place(x=25, y=235)
+        self.forget_y_password.place(x=20, y=240)
 
         login_button = ctk.CTkButton(
             master=self.login_frame,
             text='Login',
             width=300,
-            command=self.check_remember_status_checkbox
+            command=self.login_verify
         )
         login_button.place(x=25, y=285)
 
@@ -254,14 +289,14 @@ class Application(BackEnd):
         self.register_label = ctk.CTkLabel(
             master=self.register_frame,
             text="Crie a sua Conta",
-            font=("Roboto", 20))
-        self.register_label.place(x=25, y=5)
+            font=("Roboto", 28))
+        self.register_label.place(x=40, y=25)
 
         span = ctk.CTkLabel(master=self.register_frame,
                             text='Preencha todos os campos corretamente.',
                             font=('Roboto', 11),
                             text_color='gray')
-        span.place(x=25, y=65)
+        span.place(x=25, y=70)
 
         self.entry_register_username = ctk.CTkEntry(
             master=self.register_frame,
@@ -331,10 +366,6 @@ class Application(BackEnd):
         print("checkbox toggled, current value:",
               self.policy_status_checkbox_var.get())
 
-    def remember_checkbox_event(self):
-        print("checkbox toggled, current value:",
-              self.remember_status_checkbox_var.get())
-
     def clean_entry_register(self):
         self.entry_register_username.delete(0, END)
         self.entry_register_email.delete(0, END)
@@ -347,5 +378,5 @@ class Application(BackEnd):
 
 
 if __name__ == "__main__":
-    app = Application()
+    app = FrontEnd()
     app.root.mainloop()
